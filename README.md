@@ -82,7 +82,7 @@ ggplot(mtsummelt, aes(x=Items, fill=Supplied)) + coord_flip() + stat_count(posit
 
 ``` r
 mtsummelt$Items <- factor(mtsummelt$Items, levels=mtsum$Items[order(mtsum$Total)])
-ggplot(mt, aes(x=Items, fill=Supplied)) + coord_flip() + stat_count() +
+ggplot(mtsummelt, aes(x=Items, fill=Supplied)) + coord_flip() + stat_count() +
   facet_wrap(~month) + theme_grey(8)
 ```
 
