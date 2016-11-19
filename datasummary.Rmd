@@ -1,0 +1,66 @@
+---
+title: "HWF Data Summary"
+author: "Dewey Dunnington"
+date: "11/19/2016"
+output: html_document
+---
+
+Libraries
+
+```{r, message=FALSE, warning=FALSE}
+library(prettymapr)
+library(dplyr)
+library(ggplot2)
+library(ggspatial)
+library(reshape2)
+```
+
+Load in data
+
+```{r, warning=FALSE}
+mt <- read.csv('data/monthly_totals.csv', stringsAsFactors = FALSE)
+mt$posix <- lubridate::dmy(mt$Date)
+mt$posix[is.na(mt$posix)] <- lubridate::mdy(mt$Date[is.na(mt$posix)])
+mt$Date <- as.character(mt$posix)
+mt$Items <- tolower(mt$Items)
+mt$Supplied[mt$Supplied != "Y"] <- "N"
+mtgeo <- read.csv('data/monthly_totals_postals.csv')
+```
+
+Plot geo
+
+```{r, warning=FALSE}
+ggplot(mtgeo, aes(lon, lat)) + geom_osm() + geom_spatial(mapping=aes(size=n)) +
+  scale_size()
+```
+
+
+Tabular summary by items
+
+```{r}
+mtsum <- mt %>% group_by(Items) %>% 
+  summarise(SuppliedY=sum(Supplied=="Y"), 
+            SuppliedN=length(Supplied)-SuppliedY, 
+            Total=length(Supplied))
+mtsumtot <- rbind(mtsum[order(mtsum$Total, decreasing = T),], data.frame(Items="Totals", SuppliedY=sum(mtsum$SuppliedY),
+                                 SuppliedN=sum(mtsum$SuppliedN),
+                                 Total=sum(mtsum$Total)))
+knitr::kable(mtsumtot)
+```
+
+
+Graphical summary by items
+
+```{r, fig.height=10}
+# plot by order of item frequency
+mtsummelt <- mt %>% select(Items, Supplied)
+mtsummelt$Items <- factor(mtsummelt$Items, levels=mtsum$Items[order(mtsum$Total)])
+ggplot(mtsummelt, aes(x=factor(Items), fill=Supplied)) + coord_flip() + stat_count()
+
+# plot by order of proportion
+mtsummelt$Items <- factor(mtsummelt$Items, levels=mtsum$Items[order(mtsum$SuppliedY/mtsum$Total)])
+ggplot(mtsummelt, aes(x=factor(Items), fill=Supplied)) + coord_flip() + stat_count(position='fill')
+```
+
+
+Graphical summary by date
