@@ -27,20 +27,31 @@ mt$Supplied[mt$Supplied != "Y"] <- "N"
 mt$Supplied <- factor(mt$Supplied, levels=c("Y", "N"))
 mtgeo <- read.csv('data/monthly_totals_postals.csv')
 
-deliveries <- mt %>% group_by(posix, Delivery.ID) %>% 
+deliveries <- mt %>% group_by(month, posix, Delivery.ID) %>% 
   summarise(Geo=unique(Geo), nitems=length(Items), 
             nyes=sum(Supplied=="Y"), nno=sum(Supplied=="N")) %>% 
   merge(mtgeo, by='Geo', all.x=T) %>% 
-  select(posix, Delivery.ID, nitems, nyes, nno, postal, lon, lat)
+  select(posix, month, Delivery.ID, nitems, nyes, nno, postal, lon, lat)
 ```
 
 Plot geo
 
-```{r, warning=FALSE, message=FALSE}
-ggplot(deliveries, aes(lon, lat)) + geom_osm() + geom_spatial(mapping=aes(size=nitems)) +
-  scale_size()
+```{r, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+deliveriessum <- deliveries %>% group_by(postal, lon, lat) %>% 
+  summarise(n=sum(nitems), fulfilled=sum(nyes)/sum(nitems))
+ggplot(deliveriessum, aes(lon, lat)) + geom_osm() + 
+  geom_spatial(mapping=aes(size=n, col=fulfilled)) + coord_fixed()
 ```
 
+Plot geo, facet by month
+
+```{r, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+deliveriessum <- deliveries %>% group_by(postal, lon, lat, month) %>% 
+  summarise(n=sum(nitems), fulfilled=sum(nyes)/sum(nitems))
+ggplot(deliveriessum, aes(lon, lat)) + geom_osm() + 
+  geom_spatial(mapping=aes(size=n, col=fulfilled)) +
+  facet_wrap(~month) + coord_fixed()
+```
 
 Tabular summary by items
 

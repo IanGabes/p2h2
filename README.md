@@ -25,21 +25,35 @@ mt$Supplied[mt$Supplied != "Y"] <- "N"
 mt$Supplied <- factor(mt$Supplied, levels=c("Y", "N"))
 mtgeo <- read.csv('data/monthly_totals_postals.csv')
 
-deliveries <- mt %>% group_by(posix, Delivery.ID) %>% 
+deliveries <- mt %>% group_by(month, posix, Delivery.ID) %>% 
   summarise(Geo=unique(Geo), nitems=length(Items), 
             nyes=sum(Supplied=="Y"), nno=sum(Supplied=="N")) %>% 
   merge(mtgeo, by='Geo', all.x=T) %>% 
-  select(posix, Delivery.ID, nitems, nyes, nno, postal, lon, lat)
+  select(posix, month, Delivery.ID, nitems, nyes, nno, postal, lon, lat)
 ```
 
 Plot geo
 
 ``` r
-ggplot(deliveries, aes(lon, lat)) + geom_osm() + geom_spatial(mapping=aes(size=nitems)) +
-  scale_size()
+deliveriessum <- deliveries %>% group_by(postal, lon, lat) %>% 
+  summarise(n=sum(nitems), fulfilled=sum(nyes)/sum(nitems))
+ggplot(deliveriessum, aes(lon, lat)) + geom_osm() + 
+  geom_spatial(mapping=aes(size=n, col=fulfilled)) + coord_fixed()
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-3-1.png)<!-- -->
+
+Plot geo, facet by month
+
+``` r
+deliveriessum <- deliveries %>% group_by(postal, lon, lat, month) %>% 
+  summarise(n=sum(nitems), fulfilled=sum(nyes)/sum(nitems))
+ggplot(deliveriessum, aes(lon, lat)) + geom_osm() + 
+  geom_spatial(mapping=aes(size=n, col=fulfilled)) +
+  facet_wrap(~month) + coord_fixed()
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-4-1.png)<!-- -->
 
 Tabular summary by items
 
@@ -63,14 +77,14 @@ mtsummelt$Items <- factor(mtsummelt$Items, levels=mtsum$Items[order(mtsum$Total)
 ggplot(mtsummelt, aes(x=Items, fill=Supplied)) + coord_flip() + stat_count()
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-markdown_github/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 # plot proportion
 ggplot(mtsummelt, aes(x=Items, fill=Supplied)) + coord_flip() + stat_count(position='fill')
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-5-2.png)<!-- -->
+![](README_files/figure-markdown_github/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 # plot by order of proportion
@@ -78,7 +92,7 @@ mtsummelt$Items <- factor(mtsummelt$Items, levels=mtsum$Items[order(mtsum$Suppli
 ggplot(mtsummelt, aes(x=Items, fill=Supplied)) + coord_flip() + stat_count(position='fill')
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-5-3.png)<!-- -->
+![](README_files/figure-markdown_github/unnamed-chunk-6-3.png)<!-- -->
 
 ``` r
 mtsummelt$Items <- factor(mtsummelt$Items, levels=mtsum$Items[order(mtsum$Total)])
@@ -86,7 +100,7 @@ ggplot(mtsummelt, aes(x=Items, fill=Supplied)) + stat_count() + coord_flip() +
   facet_wrap(~month) + theme_grey(8)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-markdown_github/unnamed-chunk-7-1.png)<!-- -->
 
 Graphical summary by date
 
@@ -98,4 +112,4 @@ deliverymelt <- deliveries %>% melt(id.vars=c("posix", "Delivery.ID", "nitems", 
 ggplot(deliverymelt, aes(x=posix, y=itemcount, fill=Supplied)) + geom_bar(stat='identity')
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-markdown_github/unnamed-chunk-8-1.png)<!-- -->
