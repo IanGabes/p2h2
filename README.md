@@ -38,7 +38,9 @@ Plot geo
 deliveriessum <- deliveries %>% group_by(postal, lon, lat) %>% 
   summarise(n=sum(nitems), fulfilled=sum(nyes)/sum(nitems))
 ggplot(deliveriessum, aes(lon, lat)) + geom_osm() + 
-  geom_spatial(mapping=aes(size=n, col=fulfilled)) + coord_fixed()
+  geom_spatial(mapping=aes(size=n, col=fulfilled)) + coord_fixed() +
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
+  scale_y_continuous(expand = c(0, 0.05))
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-3-1.png)<!-- -->
@@ -50,7 +52,9 @@ deliveriessum <- deliveries %>% group_by(postal, lon, lat, month) %>%
   summarise(n=sum(nitems), fulfilled=sum(nyes)/sum(nitems))
 ggplot(deliveriessum, aes(lon, lat)) + geom_osm() + 
   geom_spatial(mapping=aes(size=n, col=fulfilled)) +
-  facet_wrap(~month) + coord_fixed()
+  facet_wrap(~month) + coord_fixed() +
+  scale_x_continuous(expand = c(0.05, 0.05)) + 
+  scale_y_continuous(expand = c(0.05, 0.05))
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-4-1.png)<!-- -->
